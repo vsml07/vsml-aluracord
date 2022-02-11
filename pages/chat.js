@@ -3,6 +3,8 @@ import React from 'react';
 import { BiSend } from 'react-icons/bi';
 import appConfig from '../config.json';
 import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/router';
+import { ButtonSendSticker } from '../src/components/ButtonSendSticker';
 
 
 // Como fazer AJAX: https://medium.com/@omariosouto/entendendo-como-fazer-ajax-com-a-fetchapi-977ff20da3c6
@@ -10,7 +12,20 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const SUPABASE_URL = 'https://zcxxoiletnmtdjawlrmq.supabase.co';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+function escutaMensagensEmTempoReal(adicionaMensagem) {
+    return supabaseClient
+      .from('mensagens')
+      .on('INSERT', (respostaLive) => {
+        adicionaMensagem(respostaLive.new);
+      })
+      .subscribe();
+  }
+
 export default function ChatPage() {
+    const roteamento = useRouter();
+    const usuarioLogado = roteamento.query.username;
+    console.log('roteamento.query', roteamento.query);
+    console.log('usuarioLogado', usuarioLogado);
     const [mensagem, setMensagem] = React.useState('');
     const [listaDeMensagens, setListaDeMensagens] = React.useState([]);
 
@@ -23,6 +38,29 @@ export default function ChatPage() {
             console.log('Dados da consulta:', data);
             setListaDeMensagens(data);
           });
+
+          const subscription = escutaMensagensEmTempoReal((novaMensagem) => {
+            console.log('Nova mensagem:', novaMensagem);
+            console.log('listaDeMensagens:', listaDeMensagens);
+            // Quero reusar um valor de referencia (objeto/array) 
+            // Passar uma função pro setState
+      
+            // setListaDeMensagens([
+            //     novaMensagem,
+            //     ...listaDeMensagens
+            // ])
+            setListaDeMensagens((valorAtualDaLista) => {
+              console.log('valorAtualDaLista:', valorAtualDaLista);
+              return [
+                novaMensagem,
+                ...valorAtualDaLista,
+              ]
+            });
+          });
+      
+          return () => {
+            subscription.unsubscribe();
+          }
       }, []);
 
     /*
@@ -39,7 +77,7 @@ export default function ChatPage() {
     function handleNovaMensagem(novaMensagem) {
         const mensagem = {
            // id: listaDeMensagens.length + 1,
-            de: 'Player1',
+            de: usuarioLogado,
             texto: novaMensagem,
         };
 
@@ -51,10 +89,10 @@ export default function ChatPage() {
         ])
         .then(({ data }) => {
           console.log('Criando mensagem: ', data);
-          setListaDeMensagens([
+         /*  setListaDeMensagens([
             data[0],
             ...listaDeMensagens,
-          ]);
+          ]); */
         });
   
       setMensagem('');
@@ -137,6 +175,12 @@ export default function ChatPage() {
                                 backgroundColor: appConfig.theme.colors.transparent.fundo,
                                 marginRight: '12px',
                                 color: appConfig.theme.colors.neutrals[200],
+                            }}
+                        />
+                        {/*CallBack */}
+                        <ButtonSendSticker 
+                            onStickerClick={(sticker) => {
+                                handleNovaMensagem(`:sticker: ${sticker}`);
                             }}
                         />
                         <Button
@@ -249,7 +293,9 @@ function MessageList(props) {
                                 {(new Date().toLocaleDateString())}
                             </Text>
                         </Box>
-                        {mensagem.texto}
+                        {mensagem.texto.startsWith(':sticker:')? (<Image src={mensagem.texto.replace(':sticker:', '')} />
+                        ):(mensagem.texto) }
+                        
                     </Text>
                 );
             })}

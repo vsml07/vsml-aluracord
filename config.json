@@ -28,10 +28,11 @@
                 "900": "#101418",
                 "999": "#080A0C"
             },
-            "transparent":{
+            "transparent": {
                 "fundo": "rgba(0, 0, 0, 0.5)",
                 "buttonN": "purple",
                 "buttonC": "#D71D46"
+            }
         }
     },
     "stickers": [
@@ -72,4 +73,4 @@
         "https://c.tenor.com/VylWt5lyjBoAAAAC/omg-yes.gif",
         "https://i.pinimg.com/originals/96/34/c5/9634c520c9a3cd4e7f23190bb2c96500.gif"
     ]
-}}
+}
